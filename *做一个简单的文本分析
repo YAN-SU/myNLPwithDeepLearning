@@ -14,5 +14,114 @@
 
 
 
-关键词分析
-  -
+【关键词分析】
+  
+  
+import jieba
+import re
+def reTest(content):
+    reContent = re.sub('<content>|</content>', '', content)
+    return reContent
+space = " "
+i = 0
+content_S = ['''
+凌晨3点，火锅还在咕嘟咕嘟冒着泡，李佳琦没有一点困倦，又要了一瓶酒。
+头半夜，饭局一开始，他就叫了几瓶香槟。成名前李佳琦喜欢喝啤酒，今年初去巴黎，在法国娇兰总部参观时，一位老先生问他爱喝什么。“Beer”，他看到对方眼睛里很快闪烁了一丝不以为然。老先生说，你一定要试试香槟。
+“现在想，香槟碰杯的声音，确实比啤酒杯美妙太多了。”李佳琦的声音低沉，放松，语速是平时的一半。
+头一天，他刚刚结束当月的“心愿节”，这是李佳琦直播间自创的促销节日。“所有女生，所有女生！”整场直播李佳琦都保持一种高亢的声调，4小时17分钟内，他连续推销了48样产品，那些面膜、粉底液、办公室小零食3000件、5000件地上架，几十秒内就被网友抢购一空。
+此时此刻，在这个小别墅私密的火锅店包房里，李佳琦的声调终于恢复到了普通人的状态。“其实直播，我可以憋尿憋4个小时。”他主动提起头一晚自己中途几次去洗手间：“每次都不是小便，是去阳台放空。”
+人们点点头：你压力太大了。
+餐桌对面，是一位知名艺术家和他的策展人朋友们。李佳琦所在的美ONE公司正在与他们策划一场展览，以李佳琦和口红为主题。几天前，策展人刚给李佳琦做了一场一对一的培训，讲了一小时“什么是艺术”。这顿晚餐本想随便聊聊，搜集一些素材，没想到一直吃到了后半夜。
+“Oh My God！”
+“我的天哪！”
+“买它！买它！买它！”
+艺术家们模仿起李佳琦的口头禅，他们判断，27岁的李佳琦是消费主义时代的一种文化现象，大家聊起北上广几个著名商场每年大促的排队盛况，相比之下，李佳琦的定位有些尴尬：“明明个人销量已经超过一个单体商场，但还是会被说low，被人说吵、卖假货、没有作品。”
+'''] 
+
+
+finput = open("/Users/pooloom/Desktop/corpus.txt")
+foutput = open("/Users/pooloom/Desktop/corpus_seg.txt", 'w')
+for line in finput:
+    line_seg = jieba.lcut(reTest(line))
+    foutput.write(space.join(line_seg))
+    content_S.append(line_seg)
+    i = i + 1
+    if (i % 10000 == 0):
+      print("Saved " + str(i) + " articles_seg")
+finput.close()
+foutput.close()
+print("Finished Saved " + str(i) + " articles")
+
+#停词表
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+stopwords = pd.read_csv("/Users/pooloom/Desktop/stopwords.txt", index_col=False, sep = "\n", quoting=3,names=['stopword'], encoding='utf-8')
+stopwords.head(50)
+
+#去掉停用词
+def drop_stopwords(contents, stopwords):
+    contents_clean = []
+    all_words = []
+    for line in contents:
+        line_clean = []
+        for word in line:
+            if word in stopwords:
+                continue
+            line_clean.append(word)
+            all_words.append(str(word))
+        contents_clean.append(line_clean)
+    return contents_clean, all_words
+contents = df_content.content_s.values.tolist()
+stopwords = stopwords.stopword.values.tolist()
+contents_clean, all_words = drop_stopwords(contents, stopwords)
+df_content = pd.DataFrame({'contents_clean':contents_clean})
+df_content.head()
+
+import numpy as np
+#统计字符出现的次数
+words_count=df_all_words.groupby(by=['all_words'])['all_words'].agg({"count":np.size})  
+#进行排序,将出现次数多的排在前面
+words_count=words_count.reset_index().sort_values(by=["count"],ascending=False)
+words_count.head()
+
+# 制作词云
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['figure.figsize'] = (10.0, 5.0)
+# wordcloud=WordCloud(font_path="/usr/share/fonts/opentype/noto/NotoSansCJK-Medium.ttc",background_color="white",max_font_size=80)
+wordcloud = WordCloud(
+        # 设置背景颜色
+        background_color="white",
+         # 设置最大显示的词云数
+       max_words=100,
+         # 这种字体都在电脑字体中，一般路径
+       font_path="/usr/share/fonts/opentype/noto/NotoSansCJK-Medium.ttc",
+#        height= 600,
+#        width= 800,
+        # 设置字体最大值
+       max_font_size=80,
+     # 设置有多少种随机生成状态，即有多少种配色方案
+       random_state=50,
+    )
+word_frequence = {x[0]:x[1] for x in words_count.head(100).values}
+wordcloud=wordcloud.fit_words(word_frequence)
+plt.imshow(wordcloud)
+wordcloud.to_file('py_book.png')  # 把词云保存下
+
+import jieba.analyse
+index= 112
+news = []
+finput = open("corpus.txt")
+for line in finput:
+    news.append(reTest(line))
+finput.close()
+df_news = pd.DataFrame({'content':news})
+print(df_news['content'][index])
+content_S_str = "".join(content_S[index])
+#提取前五个作为关键词
+print("   ".join(jieba.analyse.extract_tags(content_S_str, topK=5, withWeight=False)))
+
+import word2vec as wv
+wv.word2vec("corpus_seg.txt", "word2vec_segm.bin", size = 300, verbose=True)
